@@ -1,55 +1,58 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-var CryptoJS = require("crypto-js");    
+var CryptoJS = require("crypto-js");
 
-var ts = new Date().getTime().toString(),
-    publicKey = '1293b142b10f3a29a97d3303b920e427',
-    privKey = '7d3a0ca0c2437bb4e8bc01b04a6f95dd945caff8',
-    storyId = 3846,
-    title,
-    marvelAttr,
-    characters,
-    characterArray = [];
+var requestParams = {
+  ts: new Date().getTime().toString(),
+  publicKey: '1293b142b10f3a29a97d3303b920e427',
+  privKey: '7d3a0ca0c2437bb4e8bc01b04a6f95dd945caff8',
+  storyId: 3846,
+  url: 'http://gateway.marvel.com/v1/public/stories/'
+}
 
-var hash = CryptoJS.MD5(ts + privKey + publicKey).toString();
-var url='http://gateway.marvel.com/v1/public/stories/';
+var hash = CryptoJS.MD5(requestParams.ts + requestParams.privKey + requestParams.publicKey).toString();
 
-//Store response data in variables to printHTML and listCharacters
-function storeStoriesData(response, attribution) {
-    title = response.title;
-    characters = response.characters.items;
-    marvelAttr = attribution;
-    
+var storeStoriesData = function(response, attribution) {
+    var title = response.title;
+    var characters = response.characters.items;
+    var marvelAttr = attribution;
+
     //Base html
     var html = '<h1 id="title">' + title + '</h1>';
         html += '<p>' + marvelAttr + '</p>';
         html += '<h3 id="characterList">Story Characters:</h3>';
-    
+
     printHTML(html);
 }
 
 //API Call to get story data
-function getStoryInfo() {
-    var storyUrl = url + storyId + '?apikey=' + publicKey;
-    
+var getStoryInfo = function() {
+    var storyUrl = requestParams.url + requestParams.storyId + '?apikey=' + requestParams.publicKey;
+
     $.getJSON(storyUrl, {
         hash: hash,
-        ts: ts
+        ts: requestParams.ts
     })
     .done(function(response) {
         getCharacterCollection(response.data.results[0].characters.collectionURI);
         storeStoriesData(response.data.results[0], response.attributionText);
-    }); //end getJSON    
+    })
+    .fail(function(err) {
+      console.error(err.message);
+    }); //end getJSON
 }
 
 //API Call to get the character collection data
-function getCharacterCollection(charCollectionURI) {
-    var collectionUrl = charCollectionURI + '?apikey=' + publicKey; 
+var getCharacterCollection = function(charCollectionURI) {
+    var collectionUrl = charCollectionURI + '?apikey=' + requestParams.publicKey;
     $.getJSON(collectionUrl, {
         hash: hash,
-        ts: ts
+        ts: requestParams.ts
     })
     .done(function(response) {
         generateCharHTML(response.data.results);
+    })
+    .fail(function(err) {
+      console.error(err.message);
     }); //end getJSON
 }
 
@@ -62,7 +65,7 @@ function printHTML(html) {
 //Loop through Character collection to generate character HTML to printHTML
 function generateCharHTML(charData) {
     var description;
-    
+
     $.each(charData, function(index, value) {
        if (charData[index].description.length === 0) {
             description = 'No charachter description available';
@@ -75,13 +78,14 @@ function generateCharHTML(charData) {
             charHtml += '<p>' + description + '</p>';
             charHtml += '</div>';
 
-        printHTML(charHtml);      
+        printHTML(charHtml);
     });
-    
+
 }
 
 //Get the story
 getStoryInfo();
+
 },{"crypto-js":10}],2:[function(require,module,exports){
 ;(function (root, factory, undef) {
 	if (typeof exports === "object") {
